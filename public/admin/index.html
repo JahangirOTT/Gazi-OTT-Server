@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Gazi OTT Admin</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #0b0f14;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: auto;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #9ca3af;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: #151b23;
+            border: 1px solid #29313d;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin: 15px 0 7px;
+            font-weight: bold;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #394454;
+            border-radius: 9px;
+            background: #0f141b;
+            color: white;
+            font-size: 15px;
+            outline: none;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: #4ade80;
+        }
+
+        input[type="file"] {
+            padding: 10px;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 18px;
+            padding: 14px;
+            border: 0;
+            border-radius: 9px;
+            background: #22c55e;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .danger {
+            background: #dc2626;
+            margin-top: 10px;
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .success {
+            background: #123d25;
+            color: #86efac;
+        }
+
+        .error {
+            background: #451818;
+            color: #fca5a5;
+        }
+
+        .video-item {
+            background: #0f141b;
+            border: 1px solid #303846;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 12px;
+        }
+
+        .video-title {
+            font-size: 17px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .video-description {
+            color: #aab2bf;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .video-date {
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .logout {
+            background: #374151;
+        }
+
+        .progress-box {
+            display: none;
+            margin-top: 15px;
+        }
+
+        progress {
+            width: 100%;
+            height: 18px;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 5px;
+            color: #9ca3af;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Gazi OTT Admin</h1>
+    <div class="subtitle">
+        Video management panel
+    </div>
+
+    <!-- LOGIN / TOKEN -->
+    <div class="card">
+
+        <h2>Admin Access</h2>
+
+        <label for="token">
+            Admin Token
+        </label>
+
+        <input
+            type="password"
+            id="token"
+            placeholder="Enter admin token"
+            autocomplete="off"
+        >
+
+        <button
+            type="button"
+            onclick="loadVideos()"
+        >
+            Login / Load Videos
+        </button>
+
+    </div>
+
+
+    <!-- UPLOAD -->
+    <div class="card">
+
+        <h2>Upload Video</h2>
+
+        <form id="uploadForm">
+
+            <label for="title">
+                Video Title
+            </label>
+
+            <input
+                type="text"
+                id="title"
+                name="title"
+                placeholder="Enter video title"
+                required
+            >
+
+            <label for="description">
+                Description
+            </label>
+
+            <textarea
+                id="description"
+                name="description"
+                placeholder="Enter video description"
+            ></textarea>
+
+            <label for="video">
+                Select Video
+            </label>
+
+            <input
+                type="file"
+                id="video"
+                name="video"
+                accept="video/*"
+                required
+            >
+
+            <button
+                type="submit"
+                id="uploadButton"
+            >
+                Upload Video
+            </button>
+
+        </form>
+
+        <div
+            class="progress-box"
+            id="progressBox"
+        >
+            <progress
+                id="progressBar"
+                value="0"
+                max="100"
+            ></progress>
+
+            <div
+                class="progress-text"
+                id="progressText"
+            >
+                0%
+            </div>
+        </div>
+
+        <div
+            class="message"
+            id="message"
+        ></div>
+
+    </div>
+
+
+    <!-- VIDEO LIST -->
+    <div class="card">
+
+        <h2>Uploaded Videos</h2>
+
+        <div id="videoList">
+            <p style="color:#9ca3af;">
+                Login to load videos.
+            </p>
+        </div>
+
+    </div>
+
+
+    <button
+        type="button"
+        class="logout"
+        onclick="logout()"
+    >
+        Clear Token
+    </button>
+
+</div>
+
+
+<script>
+
+const tokenInput = document.getElementById("token");
+const uploadForm = document.getElementById("uploadForm");
+const uploadButton = document.getElementById("uploadButton");
+
+const messageBox = document.getElementById("message");
+
+const progressBox = document.getElementById("progressBox");
+const progressBar = document.getElementById("progressBar");
+const progressText = document.getElementById("progressText");
+
+const videoList = document.getElementById("videoList");
+
+
+function getToken() {
+
+    return tokenInput.value.trim();
+
+}
+
+
+function showMessage(message, type) {
+
+    messageBox.textContent = message;
+
+    messageBox.className =
+        "message " + type;
+
+    messageBox.style.display = "block";
+
+}
+
+
+function hideMessage() {
+
+    messageBox.style.display = "none";
+
+}
+
+
+async function loadVideos() {
+
+    const token = getToken();
+
+    if (!token) {
+
+        showMessage(
+            "Please enter admin token.",
+            "error"
+        );
+
+        return;
+    }
+
+    videoList.innerHTML =
+        "<p style='color:#9ca3af;'>Loading...</p>";
+
+    try {
+
+        const response = await fetch(
+            "/api/admin/videos",
+            {
+                method: "GET",
+
+                headers: {
+                    "Authorization":
+                        "Bearer " + token
+                }
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                "Failed to load videos"
+            );
+
+        }
+
+        displayVideos(data);
+
+        showMessage(
+            "Admin access successful.",
+            "success"
+        );
+
+    } catch (error) {
+
+        videoList.innerHTML = "";
+
+        showMessage(
+            error.message,
+            "error"
+        );
+
+    }
+
+}
+
+
+function displayVideos(videos) {
+
+    videoList.innerHTML = "";
+
+    if (!videos || videos.length === 0) {
+
+        videoList.innerHTML =
+            "<p style='color:#9ca3af;'>No videos uploaded yet.</p>";
+
+        return;
+    }
+
+
+    videos.forEach(function(video) {
+
+        const item =
+            document.createElement("div");
+
+        item.className = "video-item";
+
+
+        const title =
+            document.createElement("div");
+
+        title.className = "video-title";
+
+        title.textContent =
+            video.title || "Untitled";
+
+
+        const description =
+            document.createElement("div");
+
+        description.className =
+            "video-description";
+
+        description.textContent =
+            video.description || "";
+
+
+        const date =
+            document.createElement("div");
+
+        date.className =
+            "video-date";
+
+        date.textContent =
+            video.created_at
+                ? new Date(
+                    video.created_at
+                  ).toLocaleString()
+                : "";
+
+
+        const deleteButton =
+            document.createElement("button");
+
+        deleteButton.className =
+            "danger";
+
+        deleteButton.textContent =
+            "Delete Video";
+
+
+        deleteButton.onclick =
+            function() {
+
+                deleteVideo(
+                    video.id
+                );
+
+            };
+
+
+        item.appendChild(title);
+
+        item.appendChild(description);
+
+        item.appendChild(date);
+
+        item.appendChild(deleteButton);
+
+        videoList.appendChild(item);
+
+    });
+
+}
+
+
+uploadForm.addEventListener(
+    "submit",
+    function(event) {
+
+        event.preventDefault();
+
+        hideMessage();
+
+        const token = getToken();
+
+        if (!token) {
+
+            showMessage(
+                "Please enter admin token first.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        const title =
+            document.getElementById(
+                "title"
+            ).value.trim();
+
+
+        const description =
+            document.getElementById(
+                "description"
+            ).value.trim();
+
+
+        const videoFile =
+            document.getElementById(
+                "video"
+            ).files[0];
+
+
+        if (!title) {
+
+            showMessage(
+                "Please enter video title.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        if (!videoFile) {
+
+            showMessage(
+                "Please select a video.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        const formData =
+            new FormData();
+
+        formData.append(
+            "title",
+            title
+        );
+
+        formData.append(
+            "description",
+            description
+        );
+
+        formData.append(
+            "video",
+            videoFile
+        );
+
+
+        const xhr =
+            new XMLHttpRequest();
+
+
+        xhr.open(
+            "POST",
+            "/api/admin/upload"
+        );
+
+
+        xhr.setRequestHeader(
+            "Authorization",
+            "Bearer " + token
+        );
+
+
+        progressBox.style.display =
+            "block";
+
+        progressBar.value = 0;
+
+        progressText.textContent =
+            "0%";
+
+        uploadButton.disabled =
+            true;
+
+
+        xhr.upload.onprogress =
+            function(event) {
+
+                if (event.lengthComputable) {
+
+                    const percent =
+                        Math.round(
+                            (
+                                event.loaded /
+                                event.total
+                            ) * 100
+                        );
+
+                    progressBar.value =
+                        percent;
+
+                    progressText.textContent =
+                        percent + "%";
+
+                }
+
+            };
+
+
+        xhr.onload =
+            async function() {
+
+                uploadButton.disabled =
+                    false;
+
+
+                try {
+
+                    const data =
+                        JSON.parse(
+                            xhr.responseText
+                        );
+
+
+                    if (
+                        xhr.status >= 200 &&
+                        xhr.status < 300
+                    ) {
+
+                        showMessage(
+                            "Video uploaded successfully.",
+                            "success"
+                        );
+
+
+                        uploadForm.reset();
+
+
+                        progressBar.value =
+                            100;
+
+                        progressText.textContent =
+                            "100%";
+
+
+                        await loadVideos();
+
+                    } else {
+
+                        throw new Error(
+                            data.message ||
+                            "Upload failed"
+                        );
+
+                    }
+
+                } catch (error) {
+
+                    showMessage(
+                        error.message,
+                        "error"
+                    );
+
+                }
+
+            };
+
+
+        xhr.onerror =
+            function() {
+
+                uploadButton.disabled =
+                    false;
+
+                showMessage(
+                    "Network error during upload.",
+                    "error"
+                );
+
+            };
+
+
+        xhr.send(formData);
+
+    }
+);
+
+
+async function deleteVideo(id) {
+
+    const token = getToken();
+
+    if (!token) {
+
+        showMessage(
+            "Please enter admin token.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const confirmed =
+        confirm(
+            "Are you sure you want to delete this video?"
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/admin/videos/" + id,
+                {
+                    method: "DELETE",
+
+                    headers: {
+                        "Authorization":
+                            "Bearer " + token
+                    }
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                "Delete failed"
+            );
+
+        }
+
+
+        showMessage(
+            "Video deleted successfully.",
+            "success"
+        );
+
+
+        await loadVideos();
+
+    } catch (error) {
+
+        showMessage(
+            error.message,
+            "error"
+        );
+
+    }
+
+}
+
+
+function logout() {
+
+    tokenInput.value = "";
+
+    videoList.innerHTML =
+        "<p style='color:#9ca3af;'>Login to load videos.</p>";
+
+    hideMessage();
+
+}
+
+
+</script>
+
+</body>
+</html>
